@@ -398,18 +398,20 @@ class TrtYOLOv3(object):
     def _create_context(self):
         return self.engine.create_execution_context()
 
-    def __init__(self, model, input_shape=(416, 416)):
+    def __init__(self, model, input_shape=(416, 416), category_num=80):
         """Initialize TensorRT plugins, engine and conetxt."""
         self.model = model
         self.input_shape = input_shape
         h, w = input_shape
+        # filters count
+        filters = (category_num + 5) * 3
         if 'tiny' in model:
-            self.output_shapes = [(1, 255, h // 32, w // 32),
-                                  (1, 255, h // 16, w // 16)]
+            self.output_shapes = [(1, filters, h // 32, w // 32),
+                                  (1, filters, h // 16, w // 16)]
         else:
-            self.output_shapes = [(1, 255, h // 32, w // 32),
-                                  (1, 255, h // 16, w // 16),
-                                  (1, 255, h //  8, w //  8)]
+            self.output_shapes = [(1, filters, h // 32, w // 32),
+                                  (1, filters, h // 16, w // 16),
+                                  (1, filters, h //  8, w //  8)]
         if 'tiny' in model:
             postprocessor_args = {
                 # A list of 2 three-dimensional tuples for the Tiny YOLO masks
@@ -420,7 +422,8 @@ class TrtYOLOv3(object):
                 # Threshold for non-max suppression algorithm, float
                 # value between 0 and 1
                 'nms_threshold': 0.5,
-                'yolo_input_resolution': input_shape
+                'yolo_input_resolution': input_shape,
+                'category_num': category_num
             }
         else:
             postprocessor_args = {
@@ -434,7 +437,8 @@ class TrtYOLOv3(object):
                 # value between 0 and 1
                 # between 0 and 1
                 'nms_threshold': 0.5,
-                'yolo_input_resolution': input_shape
+                'yolo_input_resolution': input_shape,
+                'category_num': category_num
             }
         self.postprocessor = PostprocessYOLO(**postprocessor_args)
 
